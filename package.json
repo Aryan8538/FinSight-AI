@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "AI-powered financial education, market tracking, and paper portfolio platform for students.",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "build": "npm run build --prefix client",
-    "start": "npm run start --prefix server",
-    "seed": "npm run seed --prefix server",
-    "test": "npm run test --prefix server"
+    "dev": "concurrently \"npm run dev --workspace finsight-ai-server\" \"npm run dev --workspace finsight-ai-client\"",
+    "build": "npm run build --workspace finsight-ai-client",
+    "start": "npm run start --workspace finsight-ai-server",
+    "seed": "npm run seed --workspace finsight-ai-server",
+    "test": "npm run test --workspace finsight-ai-server"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
