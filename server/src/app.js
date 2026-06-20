@@ -13,9 +13,31 @@ import { errorHandler, notFound } from "./middleware/error.js";
 import { ok } from "./utils/http.js";
 
 const app = express();
+const configuredOrigins = env.clientUrl
+  .split(",")
+  .map((value) => value.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  const normalizedOrigin = origin.replace(/\/$/, "");
+  return (
+    configuredOrigins.includes(normalizedOrigin) ||
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin) ||
+    (env.nodeEnv !== "production" && /^http:\/\/localhost:\d+$/i.test(normalizedOrigin))
+  );
+}
+
 app.set("trust proxy", 1);
 app.use(helmet());
-app.use(cors({ origin: env.clientUrl.split(",").map((value) => value.trim()), credentials: true }));
+app.use(
+  cors({
+    origin(origin, callback) {
+      callback(null, isAllowedOrigin(origin));
+    },
+    credentials: true
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
 app.use(
@@ -47,4 +69,3 @@ app.use(notFound);
 app.use(errorHandler);
 
 export default app;
-
