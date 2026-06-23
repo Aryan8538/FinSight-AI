@@ -59,6 +59,13 @@ app.use(
   })
 );
 
+app.get("/", (_req, res) =>
+  ok(res, {
+    service: "finsight-api",
+    message: "FinSight AI backend is running",
+    health: "/api/v1/health"
+  })
+);
 app.get("/api/v1/health", (_req, res) => ok(res, { service: "finsight-api", uptime: process.uptime() }));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/market", marketRoutes);
