@@ -11,6 +11,7 @@ export default function AdvisorPage() {
   const [session, setSession] = useState(null);
   const [message, setMessage] = useState(params.get("prompt") || "");
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
   const bottomRef = useRef(null);
 
   async function loadSessions() {
@@ -20,6 +21,7 @@ export default function AdvisorPage() {
   useEffect(() => { loadSessions(); }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [session?.messages, sending]);
   async function openSession(id) {
+    setError("");
     const data = await api(`/chat/sessions/${id}`);
     setSession(data.session);
   }
@@ -29,11 +31,14 @@ export default function AdvisorPage() {
     if (!text || sending) return;
     setMessage("");
     setSending(true);
+    setError("");
     setSession((current) => ({ ...(current || { messages: [] }), messages: [...(current?.messages || []), { role: "user", content: text }] }));
     try {
       const data = await api("/chat/messages", { method: "POST", body: JSON.stringify({ message: text, sessionId: session?._id }) });
       setSession(data.session);
       await loadSessions();
+    } catch (err) {
+      setError(err.message || "Failed to send message. Please check your connection.");
     } finally {
       setSending(false);
     }
@@ -47,7 +52,7 @@ export default function AdvisorPage() {
   return (
     <div className="advisor-page">
       <aside className="chat-history">
-        <button className="button primary full" onClick={() => setSession(null)}><Plus size={17} /> New conversation</button>
+        <button className="button primary full" onClick={() => { setSession(null); setError(""); }}><Plus size={17} /> New conversation</button>
         <span className="eyebrow">Recent chats</span>
         <div>{sessions.map((item) => <button className={session?._id === item._id ? "active" : ""} key={item._id} onClick={() => openSession(item._id)}><span>{item.title}</span><Trash2 size={14} onClick={(event) => { event.stopPropagation(); remove(item._id); }} /></button>)}</div>
       </aside>
@@ -58,7 +63,12 @@ export default function AdvisorPage() {
           {sending && <div className="message assistant"><span className="message-avatar"><Bot size={17} /></span><div className="typing"><i /><i /><i /></div></div>}
           <div ref={bottomRef} />
         </div>
-        <form className="chat-composer" onSubmit={send}><textarea value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Ask about budgeting, investing, credit, your paper portfolio…" rows={1} /><button disabled={!message.trim() || sending} aria-label="Send message"><Send size={19} /></button><small>FinSight can make mistakes. Use answers for education, not as financial advice.</small></form>
+        <form className="chat-composer" onSubmit={send}>
+          {error && <div className="chat-error">{error}</div>}
+          <textarea value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Ask about budgeting, investing, credit, your paper portfolio…" rows={1} />
+          <button disabled={!message.trim() || sending} aria-label="Send message"><Send size={19} /></button>
+          <small>FinSight can make mistakes. Use answers for education, not as financial advice.</small>
+        </form>
       </section>
     </div>
   );

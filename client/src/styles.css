@@ -255,6 +255,8 @@ label > small { color: var(--muted); font-weight: 400; }
 .profile-identity p { color: var(--muted); font-size: 13px; }
 .privacy-note { display: flex; align-items: center; gap: 9px; border-radius: 10px; padding: 12px; color: #4b665c; background: #edf7f2; font-size: 12px; }
 .form-error { color: #9a443e; background: #fff0ed; padding: 10px 12px; border-radius: 9px; font-size: 12px; }
+.chat-error { color: #9a443e; background: #fff0ed; padding: 10px 12px; border-radius: 9px; font-size: 12px; margin-bottom: 12px; text-align: center; }
+.ticker-fetch-loader { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 5px; margin-top: 4px; font-weight: 500; }
 .loading-state { min-height: 100vh; display: grid; place-content: center; justify-items: center; color: var(--muted); }
 .spinner { width: 35px; height: 35px; border-radius: 50%; border: 3px solid #d9e7e0; border-top-color: var(--green); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -5,7 +5,7 @@ export function notFound(req, _res, next) {
 }
 
 export function errorHandler(error, _req, res, _next) {
-  if (error.name === "MongoServerError" && error.code === 11000) {
+  if (error.code === 11000) {
     return fail(res, 409, "A record with that value already exists", error.keyValue);
   }
   if (error.name === "CastError") return fail(res, 400, "Invalid resource identifier");

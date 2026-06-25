@@ -27,7 +27,7 @@ export default function LessonPage() {
         </article>
         <form className="quiz-card panel" onSubmit={submit}>
           <span className="eyebrow">Quick knowledge check</span><h2>Test what stuck</h2>
-          {module.quiz.map((question, qIndex) => <fieldset key={question._id}><legend>{qIndex + 1}. {question.question}</legend>{question.options.map((option, oIndex) => <label className="quiz-option" key={option}><input required={qIndex === 0} type="radio" name={`q-${qIndex}`} checked={answers[qIndex] === oIndex} onChange={() => setAnswers((current) => { const next = [...current]; next[qIndex] = oIndex; return next; })} /><span>{option}</span></label>)}</fieldset>)}
+          {module.quiz.map((question, qIndex) => <fieldset key={question._id}><legend>{qIndex + 1}. {question.question}</legend>{question.options.map((option, oIndex) => <label className="quiz-option" key={option}><input required type="radio" name={`q-${qIndex}`} checked={answers[qIndex] === oIndex} onChange={() => setAnswers((current) => { const next = [...current]; next[qIndex] = oIndex; return next; })} /><span>{option}</span></label>)}</fieldset>)}
           {result && <div className={result.completed ? "quiz-result success" : "quiz-result"}><strong>{result.score}%</strong><span>{result.completed ? "Nice work — lesson complete!" : "Give it another try. Review the explanations below."}</span></div>}
           <button className="button primary full">Check my answers</button>
         </form>

@@ -3,34 +3,10 @@ import { env } from "../config/env.js";
 import { AppError, asyncHandler } from "../utils/http.js";
 import User from "../models/User.js";
 
-async function getDemoUser() {
-  const existingUser = await User.findOne({ email: "demo@finsight.ai" }).select("-password");
-  if (existingUser) return existingUser;
-
-  const createdUser = await User.create({
-    name: "Demo Student",
-    email: "demo@finsight.ai",
-    password: "DemoPassword2026",
-    profile: {
-      school: "FinSight Demo",
-      experience: "beginner",
-      riskTolerance: "balanced",
-      goals: ["Learn investing", "Build a paper portfolio", "Understand budgeting"]
-    },
-    watchlist: ["AAPL", "MSFT", "NVDA"],
-    badges: []
-  });
-
-  return User.findById(createdUser._id).select("-password");
-}
-
 export const requireAuth = asyncHandler(async (req, _res, next) => {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token) {
-    req.user = await getDemoUser();
-    return next();
-  }
+  if (!token) throw new AppError(401, "Authentication required");
 
   try {
     const payload = jwt.verify(token, env.jwtSecret);
@@ -43,3 +19,4 @@ export const requireAuth = asyncHandler(async (req, _res, next) => {
     throw new AppError(401, "Invalid or expired token");
   }
 });
+

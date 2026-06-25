@@ -11,15 +11,21 @@ export default function DashboardPage() {
   const [chart, setChart] = useState([]);
 
   useEffect(() => {
-    Promise.all([
-      api("/portfolios"),
-      api("/learning"),
-      api("/market/watchlist"),
-      api("/market/history/SPY?range=1M")
-    ]).then(([portfolios, learning, market, history]) => {
-      setData({ portfolios: portfolios.portfolios, modules: learning.modules, quotes: market.quotes });
-      setChart(history.points);
-    }).catch(() => {});
+    const fetchPortfolios = api("/portfolios").catch(() => ({ portfolios: [] }));
+    const fetchLearning = api("/learning").catch(() => ({ modules: [] }));
+    const fetchWatchlist = api("/market/watchlist").catch(() => ({ quotes: [] }));
+    const fetchHistory = api("/market/history/SPY?range=1M").catch(() => ({ points: [] }));
+
+    Promise.all([fetchPortfolios, fetchLearning, fetchWatchlist, fetchHistory]).then(
+      ([portfolios, learning, market, history]) => {
+        setData({
+          portfolios: portfolios?.portfolios || [],
+          modules: learning?.modules || [],
+          quotes: market?.quotes || []
+        });
+        setChart(history?.points || []);
+      }
+    ).catch(() => {});
   }, []);
 
   const totals = data.portfolios.reduce((result, portfolio) => ({

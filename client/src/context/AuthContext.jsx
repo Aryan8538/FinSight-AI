@@ -1,46 +1,48 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api.js";
 
 const AuthContext = createContext(null);
 
-const demoUser = {
-  id: "demo",
-  name: "Demo Student",
-  email: "demo@finsight.ai",
-  profile: {
-    school: "FinSight Demo",
-    experience: "beginner",
-    riskTolerance: "balanced",
-    goals: ["Learn investing", "Build a paper portfolio", "Understand budgeting"]
-  },
-  watchlist: ["AAPL", "MSFT", "NVDA"],
-  badges: []
-};
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(demoUser);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!localStorage.getItem("finsight_token")) {
+      setLoading(false);
+      return;
+    }
+    api("/auth/me")
+      .then(({ user: currentUser }) => setUser(currentUser))
+      .catch(() => localStorage.removeItem("finsight_token"))
+      .finally(() => setLoading(false));
+  }, []);
 
   const value = useMemo(
     () => ({
       user,
-      loading: false,
-      async login() {
-        setUser(demoUser);
+      loading,
+      async login(credentials) {
+        const data = await api("/auth/login", { method: "POST", body: JSON.stringify(credentials) });
+        localStorage.setItem("finsight_token", data.token);
+        setUser(data.user);
       },
-      async register() {
-        setUser(demoUser);
+      async register(values) {
+        const data = await api("/auth/register", { method: "POST", body: JSON.stringify(values) });
+        localStorage.setItem("finsight_token", data.token);
+        setUser(data.user);
       },
       logout() {
-        setUser(demoUser);
+        localStorage.removeItem("finsight_token");
+        setUser(null);
       },
       async updateProfile(profile) {
         const data = await api("/auth/profile", { method: "PATCH", body: JSON.stringify(profile) });
-        const updatedUser = data.user || { ...user, profile: { ...user.profile, ...profile } };
-        setUser(updatedUser);
-        return updatedUser;
+        setUser(data.user);
+        return data.user;
       }
     }),
-    [user]
+    [loading, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -49,3 +51,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

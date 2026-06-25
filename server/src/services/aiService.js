@@ -30,26 +30,34 @@ A useful next lesson is **Risk & Diversification**. ${disclaimer}`;
 export async function askAdvisor({ message, history, user, portfolios }) {
   if (!env.groqApiKey) return { content: fallbackAnswer(message), provider: "demo" };
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.groqApiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: env.groqModel,
-      temperature: 0.45,
-      max_tokens: 700,
-      messages: [
-        { role: "system", content: systemPrompt(user, portfolios) },
-        ...history.slice(-10).map(({ role, content }) => ({ role, content })),
-        { role: "user", content: message }
-      ]
-    })
-  });
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.groqApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: env.groqModel,
+        temperature: 0.45,
+        max_tokens: 700,
+        messages: [
+          { role: "system", content: systemPrompt(user, portfolios) },
+          ...history.slice(-10).map(({ role, content }) => ({ role, content })),
+          { role: "user", content: message }
+        ]
+      })
+    });
 
-  if (!response.ok) throw new Error(`Groq API returned ${response.status}`);
-  const data = await response.json();
-  return { content: data.choices?.[0]?.message?.content || fallbackAnswer(message), provider: "groq" };
+    if (!response.ok) {
+      console.warn(`Groq API returned status ${response.status}. Falling back to demo mode.`);
+      return { content: fallbackAnswer(message), provider: "demo" };
+    }
+    const data = await response.json();
+    return { content: data.choices?.[0]?.message?.content || fallbackAnswer(message), provider: "groq" };
+  } catch (error) {
+    console.error("Failed to query Groq API, falling back to demo mode:", error);
+    return { content: fallbackAnswer(message), provider: "demo" };
+  }
 }
 

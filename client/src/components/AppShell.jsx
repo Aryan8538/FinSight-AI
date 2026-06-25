@@ -1,4 +1,4 @@
-import { BookOpen, Bot, BriefcaseBusiness, LayoutDashboard, Menu, Settings, TrendingUp, X } from "lucide-react";
+import { BookOpen, Bot, BriefcaseBusiness, LayoutDashboard, LogOut, Menu, Settings, TrendingUp, X } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -13,7 +13,7 @@ const navigation = [
 ];
 
 export default function AppShell() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -37,7 +37,7 @@ export default function AppShell() {
             <span><strong>{user?.name}</strong><small>{user?.profile?.experience || "beginner"} investor</small></span>
             <Settings size={16} />
           </NavLink>
-          <p className="disclaimer-mini">Demo mode is enabled. No sign-in required.</p>
+          <button className="nav-logout" onClick={logout}><LogOut size={18} /> Sign out</button>
           <p className="disclaimer-mini">Educational tools only. Not financial advice.</p>
         </div>
       </aside>
@@ -53,3 +53,4 @@ export default function AppShell() {
     </div>
   );
 }
+

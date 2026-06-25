@@ -11,6 +11,27 @@ export default function PortfolioPage() {
   const [newName, setNewName] = useState("");
   const [holding, setHolding] = useState(emptyHolding);
   const [showHolding, setShowHolding] = useState(false);
+  const [fetchingPrice, setFetchingPrice] = useState(false);
+
+  async function fetchCurrentPrice() {
+    const symbol = holding.symbol.trim().toUpperCase();
+    if (!symbol) return;
+    setFetchingPrice(true);
+    try {
+      const data = await api(`/market/quote/${symbol}`);
+      if (data && data.quote) {
+        setHolding((current) => ({
+          ...current,
+          companyName: data.quote.companyName || current.companyName,
+          purchasePrice: data.quote.price !== null ? data.quote.price : current.purchasePrice
+        }));
+      }
+    } catch (err) {
+      console.warn("Failed to auto-fetch quote", err);
+    } finally {
+      setFetchingPrice(false);
+    }
+  }
 
   async function load() {
     const data = await api("/portfolios");
@@ -85,7 +106,17 @@ export default function PortfolioPage() {
       )}
       {showHolding && <div className="modal-backdrop"><form className="modal" onSubmit={addHolding}>
         <div className="modal-heading"><div><span className="eyebrow">Paper transaction</span><h2>Add a holding</h2></div><button type="button" className="icon-button" onClick={() => setShowHolding(false)}><X size={20} /></button></div>
-        <div className="form-grid"><label>Ticker<input required value={holding.symbol} onChange={(e) => setHolding({ ...holding, symbol: e.target.value.toUpperCase() })} placeholder="AAPL" /></label><label>Company name<input value={holding.companyName} onChange={(e) => setHolding({ ...holding, companyName: e.target.value })} placeholder="Apple Inc." /></label><label>Quantity<input required type="number" min="0.0001" step="any" value={holding.quantity} onChange={(e) => setHolding({ ...holding, quantity: e.target.value })} /></label><label>Purchase price<input required type="number" min="0" step="any" value={holding.purchasePrice} onChange={(e) => setHolding({ ...holding, purchasePrice: e.target.value })} placeholder="180.00" /></label><label>Purchase date<input required type="date" value={holding.purchaseDate} onChange={(e) => setHolding({ ...holding, purchaseDate: e.target.value })} /></label></div>
+        <div className="form-grid">
+          <label>
+            Ticker
+            <input required value={holding.symbol} onChange={(e) => setHolding({ ...holding, symbol: e.target.value.toUpperCase() })} onBlur={fetchCurrentPrice} placeholder="AAPL" />
+            {fetchingPrice && <span className="ticker-fetch-loader"><span className="spinner" style={{ width: 12, height: 12, borderWidth: 1.5 }} /> Fetching price...</span>}
+          </label>
+          <label>Company name<input value={holding.companyName} onChange={(e) => setHolding({ ...holding, companyName: e.target.value })} placeholder="Apple Inc." /></label>
+          <label>Quantity<input required type="number" min="0.0001" step="any" value={holding.quantity} onChange={(e) => setHolding({ ...holding, quantity: e.target.value })} /></label>
+          <label>Purchase price<input required type="number" min="0" step="any" value={holding.purchasePrice} onChange={(e) => setHolding({ ...holding, purchasePrice: e.target.value })} placeholder="180.00" /></label>
+          <label>Purchase date<input required type="date" value={holding.purchaseDate} onChange={(e) => setHolding({ ...holding, purchaseDate: e.target.value })} /></label>
+        </div>
         <p className="data-note">This is a simulation. No real order will be placed.</p>
         <button className="button primary full">Add to portfolio</button>
       </form></div>}
