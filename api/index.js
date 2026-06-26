@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       status: "error",
       data: null,
       error: {
-        message: "Database connection unavailable",
+        message: error.message && error.message.includes("MONGODB_URI") ? error.message : "Database connection unavailable",
         details: process.env.NODE_ENV === "development" ? error.message : null
       }
     });

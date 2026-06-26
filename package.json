@@ -2,6 +2,7 @@
   "name": "finsight-ai",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "AI-powered financial education, market tracking, and paper portfolio platform for students.",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
