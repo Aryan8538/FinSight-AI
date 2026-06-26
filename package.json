@@ -6,7 +6,7 @@
   "description": "AI-powered financial education, market tracking, and paper portfolio platform for students.",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "build": "npm run build --prefix client",
+    "build": "npm install --prefix client && npm run build --prefix client",
     "start": "npm run start --prefix server",
     "seed": "npm run seed --prefix server",
     "test": "npm run test --prefix server"
