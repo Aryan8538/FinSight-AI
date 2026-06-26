@@ -2,6 +2,10 @@ import app from "../server/src/app.js";
 import { connectDatabase } from "../server/src/config/db.js";
 
 export default async function handler(req, res) {
+  const url = req.url || "";
+  if (url.includes("/health") || url.includes("/ping")) {
+    return app(req, res);
+  }
   try {
     await connectDatabase();
     return app(req, res);
