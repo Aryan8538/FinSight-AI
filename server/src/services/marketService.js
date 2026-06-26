@@ -6,8 +6,8 @@ const demoCompanies = [
   { symbol: "MSFT", description: "Microsoft Corporation" },
   { symbol: "NVDA", description: "NVIDIA Corporation" },
   { symbol: "AMZN", description: "Amazon.com Inc." },
-  { symbol: "GOOGL", description: "Alphabet Inc." },
-  { symbol: "META", description: "Meta Platforms Inc." },
+  { symbol: "GOOGL", description: "Alphabet Inc. (Google)" },
+  { symbol: "META", description: "Meta Platforms Inc. (Facebook)" },
   { symbol: "TSLA", description: "Tesla Inc." },
   { symbol: "SPY", description: "SPDR S&P 500 ETF Trust" }
 ];
