@@ -12,6 +12,8 @@ export default function PortfolioPage() {
   const [holding, setHolding] = useState(emptyHolding);
   const [showHolding, setShowHolding] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
+  const [error, setError] = useState("");
+  const [modalError, setModalError] = useState("");
 
   async function fetchCurrentPrice() {
     const symbol = holding.symbol.trim().toUpperCase();
@@ -36,57 +38,96 @@ export default function PortfolioPage() {
   async function load() {
     const data = await api("/portfolios");
     setPortfolios(data.portfolios);
-    setActiveId((current) => current || data.portfolios[0]?._id || "");
+    setActiveId((current) => {
+      const exists = data.portfolios.some((p) => p._id === current);
+      return exists ? current : (data.portfolios[0]?._id || "");
+    });
   }
   useEffect(() => { load().catch(() => {}); }, []);
   const active = portfolios.find((item) => item._id === activeId);
 
   async function createPortfolio(event) {
     event.preventDefault();
-    if (!newName.trim()) return;
-    const data = await api("/portfolios", { method: "POST", body: JSON.stringify({ name: newName }) });
-    setNewName("");
-    await load();
-    setActiveId(data.portfolio._id);
+    setError("");
+    const name = newName.trim() || `Portfolio ${portfolios.length + 1}`;
+    try {
+      const data = await api("/portfolios", { method: "POST", body: JSON.stringify({ name }) });
+      setNewName("");
+      await load();
+      setActiveId(data.portfolio._id);
+    } catch (err) {
+      setError(err.message || "Failed to create portfolio");
+    }
+  }
+  async function deletePortfolio() {
+    if (!active) return;
+    if (!window.confirm(`Are you sure you want to delete the portfolio "${active.name}"?`)) return;
+    setError("");
+    try {
+      await api(`/portfolios/${activeId}`, { method: "DELETE" });
+      setActiveId("");
+      await load();
+    } catch (err) {
+      setError(err.message || "Failed to delete portfolio");
+    }
   }
   async function addHolding(event) {
     event.preventDefault();
-    await api(`/portfolios/${activeId}/holdings`, { method: "POST", body: JSON.stringify(holding) });
-    setHolding(emptyHolding);
-    setShowHolding(false);
-    await load();
+    setModalError("");
+    try {
+      await api(`/portfolios/${activeId}/holdings`, { method: "POST", body: JSON.stringify(holding) });
+      setHolding(emptyHolding);
+      setShowHolding(false);
+      await load();
+    } catch (err) {
+      setModalError(err.message || "Failed to add holding");
+    }
   }
   async function removeHolding(id) {
-    await api(`/portfolios/${activeId}/holdings/${id}`, { method: "DELETE" });
-    await load();
+    setError("");
+    try {
+      await api(`/portfolios/${activeId}/holdings/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err.message || "Failed to remove holding");
+    }
   }
   async function downloadCsv() {
-    const blob = await api(`/portfolios/${activeId}/export`);
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${active.name}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    setError("");
+    try {
+      const blob = await api(`/portfolios/${activeId}/export`);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${active.name}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || "Failed to export CSV");
+    }
   }
 
   return (
     <div className="page">
       <div className="page-heading">
         <div><span className="eyebrow">Paper investing</span><h1>Practice a strategy before risking a dollar.</h1><p>Create portfolios, add hypothetical purchases, and watch the math unfold.</p></div>
-        {active && <button className="button primary" onClick={() => setShowHolding(true)}><Plus size={17} /> Add holding</button>}
+        {active && <button className="button primary" onClick={() => { setShowHolding(true); setModalError(""); }}><Plus size={17} /> Add holding</button>}
       </div>
       <div className="portfolio-tabs">
-        {portfolios.map((portfolio) => <button key={portfolio._id} className={activeId === portfolio._id ? "active" : ""} onClick={() => setActiveId(portfolio._id)}>{portfolio.name}</button>)}
+        {portfolios.map((portfolio) => <button key={portfolio._id} className={activeId === portfolio._id ? "active" : ""} onClick={() => { setActiveId(portfolio._id); setError(""); }}>{portfolio.name}</button>)}
         <form onSubmit={createPortfolio}><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New portfolio" /><button aria-label="Create portfolio"><Plus size={16} /></button></form>
       </div>
+      {error && <div className="form-error" style={{ marginBottom: 15 }}>{error}</div>}
       {!active ? <div className="panel"><EmptyState icon={WalletCards} title="Create your first paper portfolio" text="Try a long-term growth, emergency fund, or learning experiment portfolio." /></div> : (
         <>
           <section className="portfolio-summary">
             <div><span>Current value</span><strong>{money(active.metrics.totalValue)}</strong></div>
             <div><span>Total invested</span><strong>{money(active.metrics.totalCost)}</strong></div>
             <div><span>Total return</span><strong className={active.metrics.gainLoss >= 0 ? "positive" : "negative"}>{money(active.metrics.gainLoss)} <small>{percent(active.metrics.gainLossPercent)}</small></strong></div>
-            <button className="button secondary" onClick={downloadCsv}><Download size={16} /> Export CSV</button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button className="button secondary" onClick={downloadCsv}><Download size={16} /> Export CSV</button>
+              <button className="button secondary" style={{ color: "#dc5c54", borderColor: "#ffe7e0" }} onClick={deletePortfolio}><Trash2 size={16} /> Delete</button>
+            </div>
           </section>
           <section className="panel holdings-panel">
             <div className="panel-heading"><div><span className="eyebrow">Holdings</span><h2>{active.name}</h2></div><span className="paper-badge">Paper portfolio</span></div>
@@ -100,12 +141,13 @@ export default function PortfolioPage() {
                   <td><button className="icon-button subtle" onClick={() => removeHolding(item._id)}><Trash2 size={16} /></button></td>
                 </tr>)}</tbody>
               </table></div>
-            ) : <EmptyState icon={WalletCards} title="This portfolio is ready" text="Add a hypothetical purchase to start tracking performance." action={<button className="button primary" onClick={() => setShowHolding(true)}><Plus size={16} /> Add first holding</button>} />}
+            ) : <EmptyState icon={WalletCards} title="This portfolio is ready" text="Add a hypothetical purchase to start tracking performance." action={<button className="button primary" onClick={() => { setShowHolding(true); setModalError(""); }}><Plus size={16} /> Add first holding</button>} />}
           </section>
         </>
       )}
       {showHolding && <div className="modal-backdrop"><form className="modal" onSubmit={addHolding}>
-        <div className="modal-heading"><div><span className="eyebrow">Paper transaction</span><h2>Add a holding</h2></div><button type="button" className="icon-button" onClick={() => setShowHolding(false)}><X size={20} /></button></div>
+        <div className="modal-heading"><div><span className="eyebrow">Paper transaction</span><h2>Add a holding</h2></div><button type="button" className="icon-button" onClick={() => { setShowHolding(false); setModalError(""); }}><X size={20} /></button></div>
+        {modalError && <div className="form-error" style={{ marginBottom: 15 }}>{modalError}</div>}
         <div className="form-grid">
           <label>
             Ticker
