@@ -12,6 +12,8 @@ export const env = {
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
   groqApiKey: process.env.GROQ_API_KEY || "",
   groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+  geminiApiKey: process.env.GEMINI_API_KEY || "",
+  geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   finnhubApiKey: process.env.FINNHUB_API_KEY || "",
   marketCacheSeconds: Number(process.env.MARKET_CACHE_SECONDS || 60)
 };
