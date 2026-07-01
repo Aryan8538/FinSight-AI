@@ -54,7 +54,28 @@ export default function AdvisorPage() {
       <aside className="chat-history">
         <button className="button primary full" onClick={() => { setSession(null); setError(""); }}><Plus size={17} /> New conversation</button>
         <span className="eyebrow">Recent chats</span>
-        <div>{sessions.map((item) => <button className={session?._id === item._id ? "active" : ""} key={item._id} onClick={() => openSession(item._id)}><span>{item.title}</span><Trash2 size={14} onClick={(event) => { event.stopPropagation(); remove(item._id); }} /></button>)}</div>
+        <div>
+          {sessions.map((item) => (
+            <div
+              className={`chat-session-item ${session?._id === item._id ? "active" : ""}`}
+              key={item._id}
+              onClick={() => openSession(item._id)}
+            >
+              <span className="chat-session-title">{item.title}</span>
+              <button
+                className="delete-chat-btn"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  remove(item._id);
+                }}
+                title="Delete conversation"
+                aria-label="Delete conversation"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
       </aside>
       <section className="chat-main">
         <header className="chat-header"><div className="advisor-avatar"><Sparkles size={20} /></div><div><strong>FinSight AI Advisor</strong><span><i /> Ready to help · Educational guidance</span></div></header>
